@@ -5,6 +5,8 @@ from typing import Dict
 
 from box.box import Box
 
+from paho.mqtt.properties import Properties as MqttProperties
+
 from tavern._core import exceptions
 from tavern._core.dict_util import check_expected_keys, format_keys
 from tavern._core.extfunctions import update_from_ext
@@ -20,6 +22,12 @@ def get_publish_args(rspec: Dict, test_block_config: TestConfig) -> dict:
     """Format mqtt request args and update using ext functions"""
 
     fspec = format_keys(rspec, test_block_config.variables)
+
+    if "properties" in fspec:
+        publish_props = MqttProperties()
+        for prop_name, prop_value in fspec["properties"].items():
+            publish_props.setattr(prop_name, prop_value)
+        fspec["properties"] = publish_props
 
     if "json" in fspec:
         if "payload" in fspec:
@@ -43,9 +51,14 @@ class MQTTRequest(BaseRequest):
     def __init__(
         self, client: MQTTClient, rspec: Dict, test_block_config: TestConfig
     ) -> None:
-        expected = {"topic", "payload", "json", "qos", "retain"}
+        expected = {"topic", "payload", "json", "qos", "retain", "properties"}
 
         check_expected_keys(expected, rspec)
+
+        if "properties" in rspec and "protocol" in client._client_args and client._client_args["protocol"] != 5:
+            msg = "MQTT publish properties can only be used when the MQTT client protocol is version 5"
+            logger.error(msg)
+            raise exceptions.UnexpectedKeysError(msg)
 
         publish_args = get_publish_args(rspec, test_block_config)
 
