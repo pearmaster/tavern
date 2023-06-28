@@ -5,7 +5,8 @@ from typing import Dict
 
 from box.box import Box
 
-from paho.mqtt.properties import Properties as MqttProperties
+from paho.mqtt.properties import Properties as MqttV5Properties
+from pahp.mqtt.packettypes import PacketTypes as MqttPacketType
 
 from tavern._core import exceptions
 from tavern._core.dict_util import check_expected_keys, format_keys
@@ -24,7 +25,7 @@ def get_publish_args(rspec: Dict, test_block_config: TestConfig) -> dict:
     fspec = format_keys(rspec, test_block_config.variables)
 
     if "properties" in fspec:
-        publish_props = MqttProperties()
+        publish_props = MqttV5Properties(MqttPacketType.PUBLISH)
         for prop_name, prop_value in fspec["properties"].items():
             publish_props.setattr(prop_name, prop_value)
         fspec["properties"] = publish_props
