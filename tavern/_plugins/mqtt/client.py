@@ -417,7 +417,7 @@ class MQTTClient:
 
         return msg
 
-    def publish(self, topic, payload=None, qos=None, retain=None):
+    def publish(self, topic, payload=None, qos=None, retain=None, properties=None):
         """publish message using paho library"""
         self._wait_for_subscriptions()
 
@@ -428,6 +428,8 @@ class MQTTClient:
             kwargs["qos"] = qos
         if retain is not None:
             kwargs["retain"] = retain
+        if properties is not None:
+            kwargs["properties"] = properties
         msg = self._client.publish(topic, payload, **kwargs)
 
         if not msg.is_published:
