@@ -6,7 +6,7 @@ from typing import Dict
 from box.box import Box
 
 from paho.mqtt.properties import Properties as MqttV5Properties
-from pahp.mqtt.packettypes import PacketTypes as MqttPacketType
+from paho.mqtt.packettypes import PacketTypes as MqttPacketType
 
 from tavern._core import exceptions
 from tavern._core.dict_util import check_expected_keys, format_keys
