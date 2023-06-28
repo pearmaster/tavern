@@ -199,6 +199,30 @@ definitions:
         description: Whether the message should be retained
         default: false
 
+      properties:
+        type: object
+        properties:
+          PayloadFormatIndicator:
+            type: integer
+          MessageExpiryInterval:
+            type: integer
+          ContentType:
+            type: string
+          ResponseTopic:
+            type: string
+          CorrelationData:
+            type: string
+          SubscriptionIdentifier:
+            type: integer
+          TopicAlias:
+            type: integer
+          UserProperty:
+            type: array
+            prefixItems:
+              - type: string
+              - type: string
+            items: false
+
   mqtt_response:
     type: object
     additionalProperties: false
