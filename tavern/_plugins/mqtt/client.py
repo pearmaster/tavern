@@ -8,6 +8,7 @@ from queue import Empty, Full, Queue
 from typing import Dict, List, Mapping, MutableMapping, Optional
 
 import paho.mqtt.client as paho
+from paho.mqtt.properties import Properties as MqttProperties
 
 from tavern._core import exceptions
 from tavern._core.dict_util import check_expected_keys
@@ -127,11 +128,16 @@ class MQTTClient:
                 "clean_session",
                 # Can't really use this easily...
                 # "userdata",
-                # Force mqttv311 - fix if this becomes an issue
-                # "protocol",
+                "protocol",
                 "transport",
             },
-            "connect": {"host", "port", "keepalive", "timeout"},
+            "connect": {
+                "host", 
+                "port", 
+                "keepalive", 
+                "timeout",
+                "clean_start"
+            },
             "tls": {
                 "enable",
                 "ca_certs",
@@ -205,9 +211,13 @@ class MQTTClient:
             logger.debug("authenticating as '%s'", self._auth_args.get("username"))
             self._client.username_pw_set(**self._auth_args)
 
+        if self._client_args.get('protocol', False) == 5:
+            self._client.on_connect = self._on_connect_v5
+            self._client.on_disconnect = self._on_disconnect_v5
+        else:
+            self._client.on_connect = self._on_connect
+            self._client.on_disconnect = self._on_disconnect
         self._client.on_message = self._on_message
-        self._client.on_connect = self._on_connect
-        self._client.on_disconnect = self._on_disconnect
         self._client.on_connect_fail = self._on_connect_fail
         self._client.on_socket_open = self._on_socket_open
         self._client.on_socket_close = self._on_socket_close
@@ -280,7 +290,10 @@ class MQTTClient:
         # Lock to ensure there is no race condition when subscribing
         self._subscribe_lock = threading.RLock()
         # callback
-        self._client.on_subscribe = self._on_subscribe
+        if self._client_args.get('protocol', False) == 5:
+            self._client.on_subscribe = self._on_subscribe_v5
+        else:
+            self._client.on_subscribe = self._on_subscribe
 
         # Mapping of topic -> subscription id, for indexing into self._subscribed
         self._subscription_mappings: Dict[str, int] = {}
@@ -321,6 +334,14 @@ class MQTTClient:
         )
 
     @staticmethod
+    def _on_connect_v5(client, userdata, flags, reasonCode, properties: MqttProperties) -> None:
+        logger.debug(
+            "Client '%s' connected to the broker with result code '%s'",
+            client._client_id.decode(),
+            reasonCode,
+        )
+
+    @staticmethod
     def _on_disconnect(client, userdata, rc) -> None:
         if rc == paho.CONNACK_ACCEPTED:
             logger.debug(
@@ -334,6 +355,22 @@ class MQTTClient:
                 client._client_id.decode(),
                 paho.connack_string(rc),
             )
+
+    @staticmethod
+    def _on_disconnect_v5(client, userdata, reasonCode, properties: MqttProperties) -> None:
+        if reasonCode == 0:
+            logger.debug(
+                "Client '%s' successfully disconnected from the broker with result code '%s'",
+                client._client_id.decode(),
+                reasonCode,
+            )
+        else:
+            logger.warning(
+                "Client %s failed to disconnect cleanly due to %s, possibly from a network error",
+                client._client_id.decode(),
+                reasonCode,
+            )
+
 
     @staticmethod
     def _on_connect_fail(client, userdata) -> None:
@@ -477,6 +514,21 @@ class MQTTClient:
                     "Got SUBACK message with mid '%s', but did not recognise that mid - will try later",
                     mid,
                 )
+
+    def _on_subscribe_v5(self, client, userdata, mid: int, reasonCodes, properties: MqttProperties) -> None:
+        with self._subscribe_lock:
+            if mid in self._subscribed:
+                self._subscribed[mid].subscribed = True
+                logger.debug(
+                    "Successfully subscribed to '%s'", self._subscribed[mid].topic
+                )
+            else:
+                logger.debug("Only tracking: %s", self._subscribed.keys())
+                logger.warning(
+                    "Got SUBACK message with mid '%s', but did not recognise that mid - will try later",
+                    mid,
+                )
+
 
     def __enter__(self) -> "MQTTClient":
         logger.debug("Connecting to %s", self._connect_args)

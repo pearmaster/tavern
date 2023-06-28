@@ -18,6 +18,25 @@ properties:
     required:
       - connect
 
+    # Enforce: clean_start for MQTTv5 only. Exclude clean_session for MQTTv5.
+    if:
+      properties:
+        client:
+          properties:
+            protocol:
+              const: 5
+    then:
+      properties:
+        client:
+          properties:
+            clean_session: false
+    else:
+      properties:
+        connect:
+          properties:
+            clean_start: false
+    
+
     properties:
       client:
         description: Arguments to pass to the paho-mqtt client constructor
@@ -40,6 +59,15 @@ properties:
             enum:
               - tcp
               - websockets
+
+          protocol:
+            type: integer
+            description: MQTT protocol version.  `3`` is MQTT v3.1, `4`` is MQTT v3.1.1, and `5` is MQTT v5.  
+            default: 4
+            enum:
+              - 3
+              - 4
+              - 5
 
       connect:
         description: Connection options
@@ -66,6 +94,10 @@ properties:
           timeout:
             type: number
             description: How long to wait for connection before giving up
+
+          clean_start:
+            type: boolean
+            description: Whether to use a clean start. MQTTv5 only.
 
       tls:
         description: Basic custom options to control secure connection

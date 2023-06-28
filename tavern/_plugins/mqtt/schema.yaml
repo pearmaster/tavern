@@ -23,6 +23,13 @@ initialisation:
             enum:
               - tcp
               - websockets
+          protocol:
+            type: int
+            required: false
+            enum:
+              - 3
+              - 4
+              - 5
 
       connect:
         required: true
@@ -41,6 +48,9 @@ initialisation:
           timeout:
             required: false
             type: float
+          clean_start:
+            type: bool
+            required: false
 
       tls:
         required: false
