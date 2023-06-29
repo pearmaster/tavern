@@ -152,6 +152,12 @@ class MQTTResponse(BaseResponse):
 
         # A list of verifiers that can be used to validate messages for this topic
         verifiers = [_MessageVerifier(self.test_block_config, v) for v in expected]
+        for v in expected:
+            if 'properties' in v:
+                if "protocol" in self._client._client_args and self._client._client_args["protocol"] != 5:
+                    # Raise something here because we don't want to expect properties if we aren't mqttv5
+                    ...
+                verifiers.append(_PropertyVerifier(self.test_block_config, v))
 
         correct_messages = []
         warnings = []
@@ -231,6 +237,26 @@ class _ReturnedMessage:
     expected: dict
     msg: MQTTMessage
 
+
+class _PropertyVerifier:
+    def __init__(self, test_block_config, expected) -> None:
+        self.expected = expected
+        self.warnings: List[str] = []
+
+    def is_valid(self, msg: MQTTMessage) -> bool:
+        def addwarning(w, *args, **kwargs):
+            logger.warning(w, *args, **kwargs)
+            self.warnings.append(w % args)
+
+        if self.expected["properties"]:
+            for prop_name, prop_value in self.expected["properties"].items():
+                if hasattr(msg, prop_name):
+                    if getattr(msg, prop_name) == prop_value:
+                        addwarning("Message with %s didn't have expected value %s", prop_name, prop_value)
+                else:
+                    addwarning("Expected message with %s property", prop_name)
+        
+        return len(self.warnings) == 0
 
 class _MessageVerifier:
     def __init__(self, test_block_config, expected) -> None:

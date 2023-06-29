@@ -67,6 +67,30 @@ definitions:
         items:
           $ref: "#/definitions/stage"
 
+  mqtt_v5_properties:
+    type: object
+    properties:
+      PayloadFormatIndicator:
+        type: integer
+      MessageExpiryInterval:
+        type: integer
+      ContentType:
+        type: string
+      ResponseTopic:
+        type: string
+      CorrelationData:
+        type: string
+      SubscriptionIdentifier:
+        type: integer
+      TopicAlias:
+        type: integer
+      UserProperty:
+        type: array
+        prefixItems:
+          - type: string
+          - type: string
+        items: false
+
   http_request:
     type: object
     additionalProperties: false
@@ -176,6 +200,12 @@ definitions:
     description: Publish MQTT message
     additionalProperties: false
 
+    # Don't allow both 'payload' and 'json'
+    dependentSchemas:
+      payload:
+        properties:
+          json: false
+
     properties:
       topic:
         type: string
@@ -200,33 +230,18 @@ definitions:
         default: false
 
       properties:
-        type: object
-        properties:
-          PayloadFormatIndicator:
-            type: integer
-          MessageExpiryInterval:
-            type: integer
-          ContentType:
-            type: string
-          ResponseTopic:
-            type: string
-          CorrelationData:
-            type: string
-          SubscriptionIdentifier:
-            type: integer
-          TopicAlias:
-            type: integer
-          UserProperty:
-            type: array
-            prefixItems:
-              - type: string
-              - type: string
-            items: false
+        $ref: "#/definitions/mqtt_v5_properties"
 
   mqtt_response:
     type: object
     additionalProperties: false
     description: Expected MQTT response
+
+    # Don't allow both 'payload' and 'json'
+    dependentSchemas:
+      payload:
+        properties:
+          json: false
 
     properties:
       unexpected:
@@ -258,6 +273,9 @@ definitions:
         description: QoS level that message should be received on
         minimum: 0
         maximum: 2
+
+      properties:
+        $ref: "#/definitions/mqtt_v5_properties"
 
       verify_response_with:
         oneOf:

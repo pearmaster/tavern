@@ -113,6 +113,7 @@ The full list of keys for this block:
 - `payload` OR `json`: A plain text payload to publish, or a YAML object to
   serialize into JSON.
 - `qos`: QoS level for publishing. Defaults to 0 in paho-mqtt.
+- `properties`: Use MQTT v5 properties.  Only when the client `protocol` was defined at `5`.  Property names are UpperCamelCase formatted. 
 
 ### Options for receiving MQTT messages
 
@@ -136,13 +137,15 @@ meantime, they are ignored and a warning will be logged.
 
 The keys which can be used:
 
-- `topic`: The MQTT topic to subcribe to
+- `topic`: The MQTT topic to subscribe to
 - `payload` OR `json`: A plain text payload or a YAML object that will be
   serialized into JSON that must match the payload of a message published to
   `topic`.
 - `timeout`: How many seconds to wait for the message to arrive. Defaults to 3.
 - `qos`: The level of QoS to subscribe to the topic with. This defaults to 1,
   and it is unlikely that you will need to ever set this value manually.
+- `properties`: Only valid when the `client` `protocol` version is `5`.
+  The received message must have MQTTv5 properties equal to the provided value(s). 
 
 While the `json` key will follow the same matching rules as
 HTTP JSON responses, The special 'anything' token can be used with the
