@@ -249,10 +249,11 @@ class _PropertyVerifier:
             self.warnings.append(w % args)
 
         if self.expected["properties"]:
+            received_props = msg.properties
             for prop_name, prop_value in self.expected["properties"].items():
-                if hasattr(msg, prop_name):
-                    if getattr(msg, prop_name) == prop_value:
-                        addwarning("Message with %s didn't have expected value %s", prop_name, prop_value)
+                if hasattr(received_props, prop_name):
+                    if getattr(received_props, prop_name) != prop_value:
+                        addwarning("Message with %s didn't have expected value %s. Got %s", prop_name, prop_value, getattr(received_props, prop_name))
                 else:
                     addwarning("Expected message with %s property", prop_name)
         
