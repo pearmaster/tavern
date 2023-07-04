@@ -258,6 +258,13 @@ class _PropertyVerifier:
                     addwarning("Expected message with %s property", prop_name)
         
         return len(self.warnings) == 0
+    
+    def popwarnings(self) -> List[str]:
+        popped = []
+        while self.warnings:
+            popped.append(self.warnings.pop(0))
+        return popped
+
 
 class _MessageVerifier:
     def __init__(self, test_block_config, expected) -> None:
