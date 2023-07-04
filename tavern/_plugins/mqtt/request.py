@@ -27,7 +27,10 @@ def get_publish_args(rspec: Dict, test_block_config: TestConfig) -> dict:
     if "properties" in fspec:
         publish_props = MqttV5Properties(MqttPacketType.PUBLISH)
         for prop_name, prop_value in fspec["properties"].items():
-            setattr(publish_props, prop_name, prop_value)
+            if prop_name == 'UserProperty':
+                setattr(publish_props, prop_name, tuple(prop_value))
+            else:
+                setattr(publish_props, prop_name, prop_value)
         fspec["properties"] = publish_props
 
     if "json" in fspec:

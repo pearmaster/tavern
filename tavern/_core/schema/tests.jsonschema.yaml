@@ -89,7 +89,6 @@ definitions:
         prefixItems:
           - type: string
           - type: string
-        items: false
 
   http_request:
     type: object
