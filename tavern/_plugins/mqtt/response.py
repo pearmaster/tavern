@@ -211,11 +211,15 @@ class MQTTResponse(BaseResponse):
 
         if verifiers:
             for v in verifiers:
-                self._adderr(
-                    "Expected '%s' on topic '%s' but no such message received",
-                    v.expected_payload,
-                    topic,
-                )
+                if isinstance(v, _MessageVerifier):
+                    self._adderr(
+                        "Expected '%s' on topic '%s' but no such message received",
+                        v.expected_payload,
+                        topic,
+                    )
+                elif isinstance(v, _PropertyVerifier):
+                    for w in v.popwarnings():
+                        self._adderr(w)
 
         for msg in correct_messages:
             if msg.expected.get("unexpected"):
