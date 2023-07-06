@@ -205,12 +205,12 @@ class MQTTResponse(BaseResponse):
                         )
                     found.append(i)
                 warnings.extend(v.popwarnings())
-            verifiers = [v for (i, v) in enumerate(verifiers) if i not in found]
+            failed_verifiers = [v for (i, v) in enumerate(verifiers) if i not in found]
 
             time_spent += time.time() - t0
 
-        if verifiers:
-            for v in verifiers:
+        if failed_verifiers:
+            for v in failed_verifiers:
                 if isinstance(v, _MessageVerifier):
                     self._adderr(
                         "Expected '%s' on topic '%s' but no such message received",
@@ -218,8 +218,11 @@ class MQTTResponse(BaseResponse):
                         topic,
                     )
                 elif isinstance(v, _PropertyVerifier):
-                    for w in v.popwarnings():
-                        self._adderr(w)
+                    self._adderr(
+                        "Expected properties %s on topic '%s' but didn't get it",
+                        v.get_expected_properties(),
+                        topic
+                    )
 
         for msg in correct_messages:
             if msg.expected.get("unexpected"):
@@ -262,6 +265,9 @@ class _PropertyVerifier:
                     addwarning("Expected message with %s property", prop_name)
         
         return len(self.warnings) == 0
+
+    def get_expected_properties(self):
+        return self.expected.get("properties", list())
     
     def popwarnings(self) -> List[str]:
         popped = []
