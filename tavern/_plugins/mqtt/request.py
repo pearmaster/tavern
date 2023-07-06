@@ -27,8 +27,11 @@ def get_publish_args(rspec: Dict, test_block_config: TestConfig) -> dict:
     if "properties" in fspec:
         publish_props = MqttV5Properties(MqttPacketType.PUBLISH)
         for prop_name, prop_value in fspec["properties"].items():
+            property_type = publish_props.properties[publish_props.getIdentFromName(prop_name)][0]
             if prop_name == 'UserProperty':
                 setattr(publish_props, prop_name, tuple(prop_value))
+            elif property_type == publish_props.types.index("Binary Data"):
+                setattr(publish_props, prop_name, prop_value.encode())
             else:
                 setattr(publish_props, prop_name, prop_value)
         fspec["properties"] = publish_props
